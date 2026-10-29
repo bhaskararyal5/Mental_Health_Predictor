@@ -1,0 +1,190 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>MindScore · Student Mental Health Predictor</title>
+  <meta name="description" content="Predict a student's mental health score from social media habits and lifestyle.">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+  <div class="bg-blob b1"></div>
+  <div class="bg-blob b2"></div>
+
+  <header class="topbar">
+    <div class="brand">
+      <span class="logo">🧠</span>
+      <span>MindScore</span>
+    </div>
+    <div class="top-right">
+      <span id="apiStatus" class="status" title="Connection to your FastAPI server">
+        <i class="dot"></i><span id="apiStatusText">Checking API…</span>
+      </span>
+      <button id="themeToggle" class="icon-btn" aria-label="Toggle theme">🌙</button>
+    </div>
+  </header>
+
+  <main class="container">
+    <section class="hero">
+      <h1>How is social media <span class="grad">affecting</span> student well-being?</h1>
+      <p>Fill in a few details about daily habits and our machine-learning model will estimate a mental health score from 0 to 10.</p>
+    </section>
+
+    <div class="layout">
+      <form id="predictForm" class="card form-card" novalidate>
+
+        <!-- Section 1 -->
+        <fieldset>
+          <legend><span class="step">1</span> About the student</legend>
+          <div class="grid">
+            <div class="field">
+              <label for="Age">Age</label>
+              <input type="number" id="Age" name="Age" min="10" max="100" value="21" required>
+              <small class="err" data-for="Age"></small>
+            </div>
+
+            <div class="field">
+              <label>Gender</label>
+              <div class="seg" data-name="Gender">
+                <button type="button" class="active" data-value="Male">♂ Male</button>
+                <button type="button" data-value="Female">♀ Female</button>
+              </div>
+            </div>
+
+            <div class="field">
+              <label for="Country">Country</label>
+              <select id="Country" name="Country" required></select>
+            </div>
+
+            <div class="field">
+              <label for="Academic_Level">Academic level</label>
+              <select id="Academic_Level" name="Academic_Level">
+                <option>High School</option>
+                <option selected>Undergraduate</option>
+                <option>Graduate</option>
+              </select>
+            </div>
+          </div>
+        </fieldset>
+
+        <!-- Section 2 -->
+        <fieldset>
+          <legend><span class="step">2</span> Social media habits</legend>
+          <div class="grid">
+            <div class="field">
+              <label for="Most_Used_Platform">Most used platform</label>
+              <select id="Most_Used_Platform" name="Most_Used_Platform"></select>
+            </div>
+
+            <div class="field">
+              <label for="Purpose_Of_Use">Main purpose of use</label>
+              <select id="Purpose_Of_Use" name="Purpose_Of_Use">
+                <option>Networking</option>
+                <option>Education</option>
+                <option selected>Entertainment</option>
+                <option>News</option>
+              </select>
+            </div>
+
+            <div class="field full">
+              <label for="Avg_Daily_Usage_Hours">Average daily usage <output id="o_Avg_Daily_Usage_Hours"></output></label>
+              <input type="range" id="Avg_Daily_Usage_Hours" name="Avg_Daily_Usage_Hours" min="0" max="16" step="0.1" value="5" data-unit="hrs">
+            </div>
+
+            <div class="field full">
+              <label for="Daily_Unlocks">Phone unlocks per day <output id="o_Daily_Unlocks"></output></label>
+              <input type="range" id="Daily_Unlocks" name="Daily_Unlocks" min="0" max="400" step="1" value="170" data-unit="times">
+            </div>
+          </div>
+        </fieldset>
+
+        <!-- Section 3 -->
+        <fieldset>
+          <legend><span class="step">3</span> Lifestyle</legend>
+          <div class="grid">
+            <div class="field full">
+              <label for="Study_Hours">Study hours per day <output id="o_Study_Hours"></output></label>
+              <input type="range" id="Study_Hours" name="Study_Hours" min="0" max="16" step="0.1" value="3" data-unit="hrs">
+            </div>
+
+            <div class="field full">
+              <label for="Physical_Activity_Hours">Physical activity per day <output id="o_Physical_Activity_Hours"></output></label>
+              <input type="range" id="Physical_Activity_Hours" name="Physical_Activity_Hours" min="0" max="6" step="0.1" value="1.7" data-unit="hrs">
+            </div>
+
+            <div class="field full">
+              <label for="Sleep_Hours_Per_Night">Sleep per night <output id="o_Sleep_Hours_Per_Night"></output></label>
+              <input type="range" id="Sleep_Hours_Per_Night" name="Sleep_Hours_Per_Night" min="0" max="14" step="0.1" value="6.6" data-unit="hrs">
+            </div>
+
+            <div class="field full">
+              <label>Stress level</label>
+              <div class="seg stress" data-name="Stress_Level">
+                <button type="button" data-value="Low" class="s-low">😌 Low</button>
+                <button type="button" data-value="Medium" class="s-med active">😐 Medium</button>
+                <button type="button" data-value="High" class="s-high">😟 High</button>
+                <button type="button" data-value="Very High" class="s-vhigh">😖 Very High</button>
+              </div>
+            </div>
+          </div>
+        </fieldset>
+
+        <div class="actions">
+          <button type="button" id="resetBtn" class="btn ghost">Reset</button>
+          <button type="submit" id="submitBtn" class="btn primary">
+            <span class="btn-label">Predict score</span>
+            <span class="spinner" hidden></span>
+          </button>
+        </div>
+        <div id="formError" class="form-error" role="alert" hidden></div>
+      </form>
+
+      <aside class="card result-card" id="resultCard">
+        <h2>Prediction</h2>
+
+        <div id="placeholder" class="placeholder">
+          <div class="ph-icon">📊</div>
+          <p>Your result will appear here.<br>Adjust the inputs and press <b>Predict score</b>.</p>
+        </div>
+
+        <div id="result" hidden>
+          <div class="gauge">
+            <svg viewBox="0 0 200 200" aria-hidden="true">
+              <circle class="track" cx="100" cy="100" r="86"/>
+              <circle id="ring" class="ring" cx="100" cy="100" r="86"/>
+            </svg>
+            <div class="gauge-text">
+              <div id="scoreNum" class="score">0.0</div>
+              <div class="of">out of 10</div>
+            </div>
+          </div>
+          <div id="badge" class="badge">—</div>
+          <p id="summary" class="summary"></p>
+
+          <h3>Things that stand out</h3>
+          <ul id="insights" class="insights"></ul>
+        </div>
+
+        <p class="disclaimer">⚠️ This is an educational ML estimate, not a medical diagnosis. If you're struggling, please talk to a qualified professional.</p>
+      </aside>
+    </div>
+  </main>
+
+  <footer class="footer">
+    <details>
+      <summary>⚙️ API settings</summary>
+      <label for="apiUrl">FastAPI base URL</label>
+      <div class="api-row">
+        <input id="apiUrl" type="url" value="http://127.0.0.1:8000">
+        <button type="button" id="apiSave" class="btn ghost small">Save</button>
+      </div>
+    </details>
+    <p>Built with FastAPI + scikit-learn · Frontend in plain HTML, CSS &amp; JS</p>
+  </footer>
+
+  <script src="script.js"></script>
+</body>
+</html>
